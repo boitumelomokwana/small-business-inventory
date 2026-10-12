@@ -169,7 +169,7 @@ export default function AdjustStockPage() {
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{adj.reason}</td>
                       </tr>
                     ))
-                  }
+                  )}
                 </tbody>
               </table>
             </div>
