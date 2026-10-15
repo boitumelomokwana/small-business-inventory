@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative">
               <img
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt={currentUser.name}
+                alt={user.name}
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100"
               />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
