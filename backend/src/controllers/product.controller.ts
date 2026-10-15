@@ -50,7 +50,10 @@ export class ProductController {
       const userId = req.user.userId;
       const { id } = req.params;
       if (typeof id !== 'string') return res.status(400).json({ success: false, error: { message: 'Invalid product id' } });
-      const validatedData = productSchema.partial().parse(req.body);
+      const parsedData = productSchema.partial().parse(req.body);
+      const validatedData = Object.fromEntries(
+        Object.entries(parsedData).filter(([, value]) => value !== undefined),
+      ) as Partial<z.infer<typeof productSchema>>;
       const product = await productService.updateProduct(userId, id, validatedData);
       if (!product) return res.status(404).json({ success: false, error: { message: 'Product not found' } });
       res.json({ success: true, data: product });
