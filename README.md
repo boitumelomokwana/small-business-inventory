@@ -43,6 +43,16 @@ The frontend and backend are independent Node.js services with their own manifes
    ```
 
    The API listens on port `5000` by default and exposes its database readiness at `/health`.
+The API applies pending migrations before it starts listening, so a fresh database is ready for registration automatically.
+
+To add isolated fake data for a demo account, set a dedicated email and password and run the seed command:
+
+   ```sh
+   cd backend
+   DEMO_EMAIL=demo@example.com DEMO_PASSWORD='choose-a-demo-password' npm run db:seed:demo
+   ```
+
+The seed creates a demo user, South African store settings, products, customers, and sales. It is safe to rerun: it avoids duplicate sample rows. If the demo account already exists, it resets that account's password to the supplied `DEMO_PASSWORD`; use a dedicated demo email and never seed a real user.
 
 3. Configure and start the frontend in another terminal:
 

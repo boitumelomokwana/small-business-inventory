@@ -12,10 +12,11 @@ const migrations = [
   '007_create_customers_and_settings.sql',
 ];
 
-async function migrate() {
+export async function migrate() {
   const client = await pool.connect();
-
   try {
+    // Serialize startup migrations when multiple API instances boot together.
+    await client.query('SELECT pg_advisory_lock($1)', [742019381]);
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         name TEXT PRIMARY KEY,
@@ -47,18 +48,21 @@ async function migrate() {
       }
     }
   } finally {
+    await client.query('SELECT pg_advisory_unlock($1)', [742019381]);
     client.release();
   }
 }
 
-migrate()
-  .then(() => pool.end())
-  .catch(async (error: unknown) => {
-    console.error('Database migration failed', error);
-    try {
-      await pool.end();
-    } catch (poolError) {
-      console.error('Database pool shutdown failed', poolError);
-    }
-    process.exitCode = 1;
-  });
+if (require.main === module) {
+  migrate()
+    .then(() => pool.end())
+    .catch(async (error: unknown) => {
+      console.error('Database migration failed', error);
+      try {
+        await pool.end();
+      } catch (poolError) {
+        console.error('Database pool shutdown failed', poolError);
+      }
+      process.exitCode = 1;
+    });
+}

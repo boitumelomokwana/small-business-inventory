@@ -11,6 +11,7 @@ import productRoutes from './routes/product.routes';
 import customerRoutes from './routes/customer.routes';
 import settingsRoutes from './routes/settings.routes';
 import reportRoutes from './routes/report.routes';
+import { migrate } from './scripts/migrate';
 
 const app = express();
 
@@ -38,11 +39,26 @@ app.get('/health', (req, res) => {
     });
 });
 
-const server = app.listen(env.port, '0.0.0.0', () => {
-  console.log(`Server is listening on port ${env.port}`);
-});
+let server: ReturnType<typeof app.listen> | undefined;
+
+void migrate()
+  .then(() => {
+    server = app.listen(env.port, '0.0.0.0', () => {
+      console.log(`Server is listening on port ${env.port}`);
+    });
+  })
+  .catch(async (error: unknown) => {
+    console.error('Database migrations failed; API startup aborted', error);
+    await pool.end();
+    process.exitCode = 1;
+  });
 
 const shutdown = () => {
+  if (!server) {
+    void pool.end();
+    return;
+  }
+
   server.close((error) => {
     if (error) {
       console.error('HTTP server shutdown failed', error);
