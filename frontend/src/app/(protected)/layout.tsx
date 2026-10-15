@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutGrid,
@@ -15,13 +16,23 @@ import {
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
-  const currentUser = user || {
-    name: 'Local Grocer',
-    email: 'admin@localgrocer.com'
-  };
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/login');
+    }
+  }, [isLoading, router, user]);
+
+  if (isLoading || !user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+        Checking your session...
+      </main>
+    );
+  }
 
   const navItems = [
     {
@@ -32,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     },
     {
       name: 'Inventory',
-      href: '/inventory',
+      href: '/products',
       icon: Package,
       isActive: pathname.startsWith('/inventory') || pathname.startsWith('/products'),
     },
@@ -121,10 +132,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-slate-900 truncate">
-                {currentUser.name}
+                {user.name}
               </p>
               <p className="text-[11px] text-slate-400 truncate">
-                {currentUser.email}
+                {user.email}
               </p>
             </div>
           </div>

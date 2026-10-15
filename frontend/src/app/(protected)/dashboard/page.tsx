@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   BarChart,
@@ -11,122 +11,97 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp,
-  Plus,
-  ArrowUpRight,
   Receipt,
   Package,
   AlertTriangle,
   BadgeDollarSign,
 } from 'lucide-react';
+import api from '@/lib/api';
 
-const chartData = [
-  { name: 'Day 1', revenue: 2400 },
-  { name: 'Day 2', revenue: 3100 },
-  { name: 'Day 3', revenue: 3600 },
-  { name: 'Day 4', revenue: 2900 },
-  { name: 'Day 5', revenue: 4200 },
-  { name: 'Day 6', revenue: 4800 },
-  { name: 'Day 7', revenue: 3900 },
-  { name: 'Day 8', revenue: 5200 },
-  { name: 'Day 9', revenue: 4900 },
-  { name: 'Day 10', revenue: 5800 },
-];
+interface DashboardStats {
+  totalProducts: number;
+  totalStockUnits: number;
+  lowStockProducts: number;
+  outOfStockProducts: number;
+  todayRevenue: number;
+  todaySalesCount: number;
+  salesOverTime: Array<{ date: string; revenue: number }>;
+  topProducts: Array<{ name: string; quantity: number }>;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  stock_quantity: number;
+  low_stock_threshold: number;
+}
+
+interface Sale {
+  id: string;
+  total_amount: number | string;
+  created_at: string;
+}
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+  }).format(amount);
 
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState('7D');
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loadError, setLoadError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const ranges = ['Today', '7D', '30D', 'Custom'];
+  useEffect(() => {
+    let active = true;
 
-  const recentOrders = [
-    {
-      id: '#SO-1082',
-      customer: 'The Green Bowl',
-      time: 'Today, 10:24 AM',
-      product: 'Organic Apples (Case)',
-      amount: 'R840.00',
-      status: 'Delivered',
-      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    },
-    {
-      id: '#SO-1081',
-      customer: 'Bakehouse Cafe',
-      time: 'Today, 08:15 AM',
-      product: 'Unbleached Flour (50lb)',
-      amount: 'R420.00',
-      status: 'In Transit',
-      badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-    },
-    {
-      id: '#SO-1080',
-      customer: 'Pantry Express',
-      time: 'Yesterday',
-      product: 'Whole Almonds (Bulk)',
-      amount: 'R1,250.00',
-      status: 'Processing',
-      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
-    },
-    {
-      id: '#SO-1079',
-      customer: 'Fresh Mart',
-      time: 'Oct 24, 2025',
-      product: 'Avocados (Box)',
-      amount: 'R980.00',
-      status: 'Delivered',
-      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    },
-  ];
+    Promise.all([
+      api.get<{ data: DashboardStats }>('/dashboard'),
+      api.get<{ data: Product[] }>('/products'),
+      api.get<{ data: Sale[] }>('/sales?limit=5'),
+    ])
+      .then(([dashboardResponse, productsResponse, salesResponse]) => {
+        if (!active) return;
+        setStats(dashboardResponse.data.data);
+        setProducts(productsResponse.data.data);
+        setSales(salesResponse.data.data);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        const message =
+          (error as { response?: { data?: { error?: { message?: string } } } })
+            .response?.data?.error?.message;
+        setLoadError(message || 'Dashboard data could not be loaded. Please try again.');
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
-  const lowStockItems = [
-    {
-      name: 'Organic Bananas',
-      sku: 'FRU-BAN-01',
-      remaining: '12 lbs left',
-      min: 'Min: 50 lbs',
-    },
-    {
-      name: 'Almond Milk 1L',
-      sku: 'BEV-ALM-12',
-      remaining: '4 cases left',
-      min: 'Min: 15 cases',
-    },
-    {
-      name: 'Whole Wheat Bread',
-      sku: 'BAK-WWB-08',
-      remaining: '2 units left',
-      min: 'Min: 20 units',
-    },
-    {
-      name: 'Extra Virgin Olive Oil',
-      sku: 'OIL-EVO-02',
-      remaining: '5 btls left',
-      min: 'Min: 20 btls',
-    },
-  ];
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const topProducts = [
-    {
-      name: 'Organic Avocados',
-      units: '142 units sold',
-      amount: 'R2,840.00',
-      trend: '+15%',
-      img: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-    {
-      name: 'Fresh Strawberries',
-      units: '118 units sold',
-      amount: 'R1,770.00',
-      trend: '+8%',
-      img: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-    {
-      name: 'Whole Bean Coffee...',
-      units: '92 units sold',
-      amount: 'R3,220.00',
-      trend: '+12%',
-      img: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-  ];
+  const ranges = ['Today', '7D', '30D'];
+  const rangeLength = selectedRange === 'Today' ? 1 : selectedRange === '7D' ? 7 : 30;
+  const chartData = (stats?.salesOverTime ?? [])
+    .slice(-rangeLength)
+    .map(({ date, revenue }) => ({
+      name: new Date(`${date}T00:00:00`).toLocaleDateString('en-ZA', {
+        day: '2-digit',
+        month: 'short',
+      }),
+      revenue,
+    }));
+  const lowStockItems = products
+    .filter((product) => product.stock_quantity <= product.low_stock_threshold)
+    .slice(0, 5);
+  const topProducts = stats?.topProducts ?? [];
+  const recentSales = sales.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -157,30 +132,37 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Add Stock Button */}
-          <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition shadow-sm shadow-indigo-100">
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Stock</span>
-          </button>
+          <Link
+            href="/products/add"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition shadow-sm shadow-indigo-100"
+          >
+            <span>Add Product</span>
+          </Link>
         </div>
       </div>
+
+      {loadError && (
+        <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {loadError}
+        </p>
+      )}
 
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Sales Revenue */}
         <div className="bg-white rounded-xl border border-slate-200/70 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Total Sales Revenue</span>
+            <span className="text-xs font-medium text-slate-500">Revenue Today</span>
             <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <BadgeDollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl font-bold text-slate-900 tracking-tight">R42,890.50</div>
-            <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-600">
-              <ArrowUpRight className="w-3 h-3" />
-              <span>+12.4%</span>
-              <span className="text-slate-400 font-normal">vs last month</span>
+            <div className="text-xl font-bold text-slate-900 tracking-tight">
+              {isLoading ? 'Loading...' : stats ? formatCurrency(stats.todayRevenue) : 'Unavailable'}
+            </div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              Revenue from today&apos;s sales
             </div>
           </div>
         </div>
@@ -188,17 +170,17 @@ export default function DashboardPage() {
         {/* Orders Processed */}
         <div className="bg-white rounded-xl border border-slate-200/70 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Orders Processed</span>
+            <span className="text-xs font-medium text-slate-500">Sales Today</span>
             <div className="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Receipt className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl font-bold text-slate-900 tracking-tight">642</div>
-            <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-600">
-              <ArrowUpRight className="w-3 h-3" />
-              <span>+8.2%</span>
-              <span className="text-slate-400 font-normal">vs last month</span>
+            <div className="text-xl font-bold text-slate-900 tracking-tight">
+              {isLoading ? 'Loading...' : stats?.todaySalesCount ?? 'Unavailable'}
+            </div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              Completed sales today
             </div>
           </div>
         </div>
@@ -206,17 +188,17 @@ export default function DashboardPage() {
         {/* Total Stock Value */}
         <div className="bg-white rounded-xl border border-slate-200/70 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Total Stock Value</span>
+            <span className="text-xs font-medium text-slate-500">Units in Stock</span>
             <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
               <Package className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl font-bold text-slate-900 tracking-tight">R186,400.00</div>
-            <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-600">
-              <ArrowUpRight className="w-3 h-3" />
-              <span>+4.7%</span>
-              <span className="text-slate-400 font-normal">vs last month</span>
+            <div className="text-xl font-bold text-slate-900 tracking-tight">
+              {isLoading ? 'Loading...' : stats?.totalStockUnits ?? 'Unavailable'}
+            </div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              Across {stats?.totalProducts ?? '—'} products
             </div>
           </div>
         </div>
@@ -230,11 +212,11 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl font-bold text-slate-900 tracking-tight">8 Items</div>
-            <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-amber-600">
-              <ArrowUpRight className="w-3 h-3" />
-              <span>+2 Items</span>
-              <span className="text-slate-400 font-normal">vs last month</span>
+            <div className="text-xl font-bold text-slate-900 tracking-tight">
+              {isLoading ? 'Loading...' : stats?.lowStockProducts ?? 'Unavailable'}
+            </div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              {stats ? `${stats.outOfStockProducts} out of stock` : 'Stock status unavailable'}
             </div>
           </div>
         </div>
@@ -285,7 +267,10 @@ export default function DashboardPage() {
                       border: 'none',
                     }}
                     cursor={{ fill: 'rgba(99, 102, 241, 0.06)' }}
-                    formatter={(value: any) => [`R${value}`, 'Revenue']}
+                    formatter={(value) => [
+                      formatCurrency(Number(value ?? 0)),
+                      'Revenue',
+                    ]}
                   />
                   <Bar
                     dataKey="revenue"
@@ -314,32 +299,32 @@ export default function DashboardPage() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-medium pb-2">
-                    <th className="pb-2 font-medium">Order ID</th>
-                    <th className="pb-2 font-medium">Customer</th>
-                    <th className="pb-2 font-medium">Main Product</th>
-                    <th className="pb-2 font-medium">Amount</th>
-                    <th className="pb-2 font-medium text-right">Status</th>
+                    <th className="pb-2 font-medium">Sale</th>
+                    <th className="pb-2 font-medium">Date</th>
+                    <th className="pb-2 font-medium text-right">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-50/50 transition">
-                      <td className="py-3 font-semibold text-indigo-600">{order.id}</td>
-                      <td className="py-3">
-                        <div className="font-medium text-slate-900">{order.customer}</div>
-                        <div className="text-[10px] text-slate-400">{order.time}</div>
+                  {recentSales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-slate-50/50 transition">
+                      <td className="py-3 font-semibold text-indigo-600">
+                        <Link href={`/sales/${sale.id}`}>{sale.id.slice(0, 8)}</Link>
                       </td>
-                      <td className="py-3 text-slate-600">{order.product}</td>
-                      <td className="py-3 font-medium text-slate-900">{order.amount}</td>
-                      <td className="py-3 text-right">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${order.badgeClass}`}
-                        >
-                          {order.status}
-                        </span>
+                      <td className="py-3 text-slate-600">
+                        {new Date(sale.created_at).toLocaleString()}
+                      </td>
+                      <td className="py-3 text-right font-medium text-slate-900">
+                        {formatCurrency(Number(sale.total_amount))}
                       </td>
                     </tr>
                   ))}
+                  {!isLoading && !loadError && recentSales.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-4 text-center text-slate-400">
+                        No sales recorded yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -358,23 +343,31 @@ export default function DashboardPage() {
                 </p>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-bold">
-                8 Alert
+              {stats?.lowStockProducts ?? '—'} alerts
               </span>
             </div>
 
             <div className="divide-y divide-slate-100">
               {lowStockItems.map((item) => (
-                <div key={item.sku} className="py-3 flex items-center justify-between">
+                <div key={item.id} className="py-3 flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-semibold text-slate-800">{item.name}</h3>
-                    <p className="text-[10px] text-slate-400">{item.sku}</p>
+                    <p className="text-[10px] text-slate-400">
+                      Threshold: {item.low_stock_threshold}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-rose-600">{item.remaining}</p>
-                    <p className="text-[10px] text-slate-400">{item.min}</p>
+                    <p className="text-xs font-bold text-rose-600">
+                      {item.stock_quantity} left
+                    </p>
                   </div>
                 </div>
               ))}
+              {!isLoading && !loadError && lowStockItems.length === 0 && (
+                <p className="py-4 text-center text-xs text-slate-400">
+                  No low-stock products.
+                </p>
+              )}
             </div>
           </div>
 
@@ -391,28 +384,28 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
-              {topProducts.map((p) => (
-                <div key={p.name} className="flex items-center justify-between">
+              {topProducts.map((product) => (
+                <div key={product.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={p.img}
-                      alt={p.name}
-                      className="w-10 h-10 rounded-lg object-cover bg-slate-100 border border-slate-100"
-                    />
-                    <div>
-                      <h3 className="text-xs font-semibold text-slate-900">{p.name}</h3>
-                      <p className="text-[10px] text-slate-400">{p.units}</p>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-100 bg-slate-100">
+                      <Package className="h-5 w-5 text-slate-400" />
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-slate-900">{p.amount}</p>
-                    <p className="text-[10px] font-medium text-emerald-600 flex items-center justify-end">
-                      <TrendingUp className="w-2.5 h-2.5 inline mr-0.5" />
-                      {p.trend}
-                    </p>
+                    <div>
+                      <h3 className="text-xs font-semibold text-slate-900">
+                        {product.name}
+                      </h3>
+                      <p className="text-[10px] text-slate-400">
+                        {product.quantity} units sold
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
+              {!isLoading && !loadError && topProducts.length === 0 && (
+                <p className="py-4 text-center text-xs text-slate-400">
+                  Sales data will appear here after your first sale.
+                </p>
+              )}
             </div>
           </div>
         </div>

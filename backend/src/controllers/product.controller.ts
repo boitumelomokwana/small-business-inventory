@@ -13,7 +13,7 @@ const productSchema = z.object({
 export class ProductController {
   async list(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const products = await productService.listProducts(userId);
       res.json({ success: true, data: products });
     } catch (error: any) {
@@ -23,7 +23,7 @@ export class ProductController {
 
   async get(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id } = req.params;
       const product = await productService.getProduct(userId, id);
       if (!product) return res.status(404).json({ success: false, error: { message: 'Product not found' } });
@@ -35,7 +35,7 @@ export class ProductController {
 
   async create(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const validatedData = productSchema.parse(req.body);
       const product = await productService.createProduct(userId, validatedData);
       res.status(201).json({ success: true, data: product });
@@ -46,7 +46,7 @@ export class ProductController {
 
   async update(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id } = req.params;
       const validatedData = productSchema.partial().parse(req.body);
       const product = await productService.updateProduct(userId, id, validatedData);
@@ -59,7 +59,7 @@ export class ProductController {
 
   async delete(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id } = req.params;
       const success = await productService.deleteProduct(userId, id);
       if (!success) return res.status(404).json({ success: false, error: { message: 'Product not found' } });

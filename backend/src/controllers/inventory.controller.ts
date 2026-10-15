@@ -11,7 +11,7 @@ const adjustStockSchema = z.object({
 export class InventoryController {
   async adjustStock(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id: productId } = req.params;
       const validatedData = adjustStockSchema.parse(req.body);
       const { quantity, type, reason } = validatedData;
@@ -66,7 +66,7 @@ export class InventoryController {
 
   async listAdjustments(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id: productId } = req.params;
 
       const result = await pool.query(

@@ -12,7 +12,7 @@ const saleSchema = z.object({
 export class SalesController {
   async create(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const validatedData = saleSchema.parse(req.body);
       const result = await salesService.createSale(userId, validatedData.items);
       res.status(201).json({ success: true, data: result });
@@ -23,9 +23,30 @@ export class SalesController {
 
   async list(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { start, end } = req.query;
-      const sales = await salesService.listSales(userId, start as string, end as string);
+      const limitParam = req.query.limit;
+      const limit = typeof limitParam === 'string' ? Number(limitParam) : undefined;
+
+      if (
+        limitParam !== undefined &&
+        (limit === undefined ||
+          !Number.isInteger(limit) ||
+          limit < 1 ||
+          limit > 100)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Limit must be an integer between 1 and 100' },
+        });
+      }
+
+      const sales = await salesService.listSales(
+        userId,
+        typeof start === 'string' ? start : undefined,
+        typeof end === 'string' ? end : undefined,
+        limit,
+      );
       res.json({ success: true, data: sales });
     } catch (error: any) {
       res.status(500).json({ success: false, error: { message: error.message } });
@@ -34,7 +55,7 @@ export class SalesController {
 
   async get(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user.userId;
       const { id } = req.params;
       const sale = await salesService.getSale(userId, id);
       if (!sale) return res.status(404).json({ success: false, error: { message: 'Sale not found' } });

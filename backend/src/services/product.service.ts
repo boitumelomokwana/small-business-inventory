@@ -28,8 +28,11 @@ export class ProductService {
   }
 
   async updateProduct(userId: string, productId: string, data: Partial<ProductInput>) {
-    const fields = Object.keys(data).map((key, index) => `${key} = $${index + 2}`).join(', ');
-    const values = Object.values(data);
+    const entries = Object.entries(data);
+    if (entries.length === 0) return this.getProduct(userId, productId);
+
+    const fields = entries.map(([key], index) => `${key} = $${index + 2}`).join(', ');
+    const values = entries.map(([, value]) => value);
 
     const result = await pool.query(
       `UPDATE products SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING *`,

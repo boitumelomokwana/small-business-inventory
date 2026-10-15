@@ -1,27 +1,22 @@
-import { Pool, PoolConfig } from 'pg';
-import dotenv from 'dotenv';
+import { Pool } from 'pg';
+import { env } from './env';
 
-dotenv.config();
-
-const dbConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+export const pool = new Pool({
+  connectionString: env.databaseUrl,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-};
-
-export const pool = new Pool(dbConfig);
+});
 
 export const query = async (text: string, params?: any[]) => {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('executed query', { text, duration, rows: res.rowCount });
+    console.log('Database query completed', { duration, rows: res.rowCount });
     return res;
   } catch (err) {
-    console.error('query error', { text, err });
+    console.error('Database query failed', { duration: Date.now() - start, err });
     throw err;
   }
 };

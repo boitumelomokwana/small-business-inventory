@@ -68,7 +68,7 @@ export class SalesService {
     }
   }
 
-  async listSales(userId: string, start?: string, end?: string) {
+  async listSales(userId: string, start?: string, end?: string, limit?: number) {
     let queryText = 'SELECT * FROM sales WHERE user_id = $1';
     const params: any[] = [userId];
 
@@ -78,6 +78,10 @@ export class SalesService {
     }
 
     queryText += ' ORDER BY created_at DESC';
+    if (limit !== undefined) {
+      params.push(limit);
+      queryText += ` LIMIT $${params.length}`;
+    }
 
     const result = await pool.query(queryText, params);
     return result.rows;
@@ -92,7 +96,7 @@ export class SalesService {
     if (saleRes.rowCount === 0) return null;
 
     const itemsRes = await pool.query(
-      'SELECT si.*, p.name as product_name FROM sale_items si JOIN products p ON si.product_id = p.id WHERE si.sale_id = $1',
+      'SELECT si.*, p.name as product_name FROM sale_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = $1',
       [saleId]
     );
 

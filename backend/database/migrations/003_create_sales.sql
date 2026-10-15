@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS sales (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sales_user_id ON sales(user_id);
-CREATE INDEX idx_sales_created_at ON sales(created_at);
+CREATE INDEX IF NOT EXISTS idx_sales_user_id ON sales(user_id);
+CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at);

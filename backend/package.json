@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc --project tsconfig.json",
+    "start": "node dist/index.js",
+    "check": "tsc --project tsconfig.json --noEmit",
+    "db:migrate": "tsx src/scripts/migrate.ts",
+    "init-db": "tsx src/scripts/init_sqlite.ts",
+    "test": "node --test"
   },
   "keywords": [],
   "type": "commonjs",
@@ -16,8 +24,9 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
-    "zod": "^4.6.1",
-    "sqlite3": "^5.1.7"
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "zod": "^4.6.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

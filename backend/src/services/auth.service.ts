@@ -1,8 +1,12 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { pool } from '../config/database';
+import { env } from '../config/env';
+import { loginSchema, registerSchema } from '../validators/auth.validator';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+type RegisterData = z.infer<typeof registerSchema>;
+type LoginData = z.infer<typeof loginSchema>;
 
 export interface User {
   id: string;
@@ -11,7 +15,7 @@ export interface User {
 }
 
 export class AuthService {
-  async register(userData: any) {
+  async register(userData: RegisterData) {
     const { name, email, password } = userData;
 
     const userExists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
@@ -28,7 +32,7 @@ export class AuthService {
     return result.rows[0];
   }
 
-  async login(credentials: any) {
+  async login(credentials: LoginData) {
     const { email, password } = credentials;
 
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -45,7 +49,7 @@ export class AuthService {
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      JWT_SECRET,
+      env.jwtSecret,
       { expiresIn: '24h' }
     );
 

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+import { env } from '../config/env';
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -13,13 +12,27 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     });
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.slice('Bearer '.length).trim();
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: { message: 'Unauthorized: No token provided' },
+    });
+  }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
-    (req as any).user = decoded;
+    const decoded = jwt.verify(token, env.jwtSecret);
+    if (
+      typeof decoded === 'string' ||
+      typeof decoded.userId !== 'string' ||
+      typeof decoded.email !== 'string'
+    ) {
+      throw new Error('Invalid token payload');
+    }
+
+    req.user = { userId: decoded.userId, email: decoded.email };
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       error: { message: 'Unauthorized: Invalid token' },

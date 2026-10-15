@@ -1,109 +1,86 @@
 # Small Business Inventory & Sales Tracker
 
-A production-quality MVP for small businesses (Spaza shops, retail stores, salons, etc.) to digitally manage their stock and record sales.
+Inventory and sales management for small businesses. The application consists of a Next.js frontend, an Express/TypeScript REST API, and PostgreSQL.
 
-## 🚀 Features
+## Project structure
 
-### 🔐 Authentication
-- Secure User Registration and Login.
-- JWT-based session management.
-- Password hashing using `bcryptjs`.
-- Protected routes and API endpoints.
-
-### 📦 Product Management
-- Full CRUD for products.
-- Category-based organization.
-- Low-stock and out-of-stock tracking.
-- Responsive inventory table with search and filtering.
-
-### 📉 Inventory Management
-- Manual stock adjustments (Increase/Decrease).
-- Detailed adjustment history for every product.
-- Strict validation to prevent negative stock.
-
-### 💰 Sales Tracking
-- Multi-product transaction support (Cart system).
-- Automatic stock reduction upon sale completion.
-- **Historical Price Preservation**: Sale items record the price at the time of transaction.
-- Atomic transactions to ensure data integrity (Rollback on failure).
-
-### 📊 Dashboard & Reporting
-- Real-time summary cards (Total revenue, stock levels).
-- Revenue trends over time (Recharts).
-- Top-selling products analysis.
-- Custom date-range sales reports.
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **State/API**: React Context, Axios
-- **Charts**: Recharts
-
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Validation**: Zod
-
-### Database
-- **Engine**: Neon PostgreSQL
-- **Driver**: `pg` (node-postgres)
-- **Migrations**: Raw SQL
-
-## 🏗️ Architecture
-
-```
-Next.js Frontend <---> REST API (JSON) <---> Express.js Backend <---> Neon PostgreSQL
+```text
+.
+├── backend/
+│   ├── database/migrations/
+│   └── src/
+├── frontend/
+│   ├── public/
+│   └── src/
+├── README.md
+└── .gitignore
 ```
 
-- **Zero ORM**: All database access is handled via parameterized SQL queries using the `pg` driver.
-- **User Isolation**: Mandatory `user_id` filtering on every query to ensure data privacy.
-- **Transactional Integrity**: Critical operations (Sales, Stock adjustments) are wrapped in PostgreSQL transactions.
+The frontend and backend are independent Node.js services with their own manifests, lockfiles, and environment templates. Install and run commands from the corresponding service directory.
 
-## 🚦 Getting Started
+## Requirements
 
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL (Neon.tech recommended)
+- Node.js 20.9 or later
+- PostgreSQL 13 or later (a managed PostgreSQL provider is recommended for production)
+- npm
 
-### Installation
+## Run locally
 
-1. **Clone the repository**
-   ```bash
-   git clone <repo-url>
-   cd small-business-inventory
-   ```
+1. Configure the API:
 
-2. **Backend Setup**
-   ```bash
+   ```sh
    cd backend
    npm install
-   cp .env.example .env # Update DATABASE_URL and JWT_SECRET
+   ```
+
+   Copy `backend/.env.example` to `backend/.env`, then set `DATABASE_URL` and replace `JWT_SECRET` with a random value of at least 32 characters.
+
+2. Apply the database migrations and start the API:
+
+   ```sh
+   npm run db:migrate
    npm run dev
    ```
 
-3. **Frontend Setup**
-   ```bash
+   The API listens on port `5000` by default and exposes its database readiness at `/health`.
+
+3. Configure and start the frontend in another terminal:
+
+   ```sh
    cd frontend
    npm install
-   cp .env.example .env # Update NEXT_PUBLIC_API_URL
+   ```
+
+   Copy `frontend/.env.example` to `frontend/.env.local`. Set `NEXT_PUBLIC_API_URL` to the API base URL, including `/api`.
+
+   ```sh
    npm run dev
    ```
 
-### Database Setup
-Run the migrations in `backend/database/migrations/` in order:
-1. `001_create_users.sql`
-2. `002_create_products.sql`
-3. `003_create_sales.sql`
-4. `004_create_sale_items.sql`
-5. `005_create_inventory_adjustments.sql`
+## Deployment
 
-## 🛡️ Security Measures
-- **SQL Injection Prevention**: All queries use parameterized inputs.
-- **Password Security**: Passwords are never stored in plain text.
-- **Data Isolation**: Users can only access records associated with their `user_id`.
-- **Input Validation**: Strict Zod schemas on both frontend and backend.
-- **Secure Auth**: JWT tokens used for session persistence.
+Deploy `backend/` and `frontend/` as separate Node.js services, using Node.js 20.9 or later.
+
+### Backend service
+
+- Build command: `npm ci && npm run build`
+- Release/pre-deploy command: `npm run db:migrate`
+- Start command: `npm start`
+- Required environment variables: `DATABASE_URL`, `JWT_SECRET` (at least 32 characters), and `FRONTEND_URL` (the frontend origin, without a path; comma-separated origins are supported).
+- Set `NODE_ENV=production` and provide the service's assigned `PORT` if required by the hosting platform.
+- Configure the hosting provider's health check to use `/health`. This endpoint returns HTTP 503 if PostgreSQL is unavailable.
+
+### Frontend service
+
+- Build command: `npm ci && npm run build`
+- Start command: `npm start`
+- Set `NEXT_PUBLIC_API_URL` to the public HTTPS API URL with `/api` appended. This value is embedded during the frontend build, and the production build fails if it is missing or invalid.
+
+Run the backend migration command once as a release step before serving traffic. Do not commit `.env` files or production secrets.
+
+## Available checks
+
+- Backend: `npm run check`
+- Frontend: `npm run typecheck`, `npm run lint`, and `npm run build`
+
+Product, inventory, sales, customer, settings, report, and dashboard API routes require a valid bearer token. Sign-up and sign-in are available under `/api/auth`.

@@ -13,15 +13,11 @@ export interface DashboardStats {
 
 export class DashboardService {
   async getStats(userId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayIso = today.toISOString();
-
     const [productsRes, salesRes, topProductsRes] = await Promise.all([
       pool.query('SELECT id, stock_quantity, low_stock_threshold FROM products WHERE user_id = $1', [userId]),
       pool.query(
-        'SELECT total_amount FROM sales WHERE user_id = $1 AND created_at >= $2',
-        [userId, todayIso]
+        'SELECT total_amount FROM sales WHERE user_id = $1 AND created_at >= CURRENT_DATE',
+        [userId]
       ),
       pool.query(
         `SELECT p.name, SUM(si.quantity) as total_qty
@@ -47,9 +43,9 @@ export class DashboardService {
     const todaySalesCount = todaySales.length;
 
     const salesOverTimeRes = await pool.query(
-      `SELECT DATE(created_at) as date, SUM(total_amount) as revenue
+      `SELECT TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date, SUM(total_amount) as revenue
        FROM sales
-       WHERE user_id = $1
+       WHERE user_id = $1 AND created_at >= CURRENT_DATE - INTERVAL '29 days'
        GROUP BY date
        ORDER BY date ASC
        LIMIT 30`,
@@ -64,7 +60,7 @@ export class DashboardService {
       todayRevenue,
       todaySalesCount,
       salesOverTime: salesOverTimeRes.rows.map(r => ({
-        date: r.date.toISOString().split('T')[0],
+        date: r.date,
         revenue: Number(r.revenue),
       })),
       topProducts: topProductsRes.rows.map(r => ({

@@ -1,5 +1,11 @@
 -- 005_create_inventory_adjustments.sql
-CREATE TYPE adjustment_type AS ENUM ('INCREASE', 'DECREASE');
+DO $$
+BEGIN
+    CREATE TYPE adjustment_type AS ENUM ('INCREASE', 'DECREASE');
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END;
+$$;
 
 CREATE TABLE IF NOT EXISTS inventory_adjustments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -11,5 +17,5 @@ CREATE TABLE IF NOT EXISTS inventory_adjustments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_adjustments_product_id ON inventory_adjustments(product_id);
-CREATE INDEX idx_adjustments_user_id ON inventory_adjustments(user_id);
+CREATE INDEX IF NOT EXISTS idx_adjustments_product_id ON inventory_adjustments(product_id);
+CREATE INDEX IF NOT EXISTS idx_adjustments_user_id ON inventory_adjustments(user_id);
