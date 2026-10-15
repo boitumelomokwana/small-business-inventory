@@ -57,6 +57,7 @@ export class SalesController {
     try {
       const userId = req.user.userId;
       const { id } = req.params;
+      if (typeof id !== 'string') return res.status(400).json({ success: false, error: { message: 'Invalid sale id' } });
       const sale = await salesService.getSale(userId, id);
       if (!sale) return res.status(404).json({ success: false, error: { message: 'Sale not found' } });
       res.json({ success: true, data: sale });

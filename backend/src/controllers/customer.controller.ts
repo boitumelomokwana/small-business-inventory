@@ -15,7 +15,11 @@ export const customerController = {
   async getById(req: Request, res: Response) {
     try {
       const userId = req.user.userId;
-      const customer = await customerService.getCustomerById(userId, req.params.id);
+      const customerId = req.params.id;
+      if (typeof customerId !== 'string') {
+        return res.status(400).json({ success: false, message: 'Invalid customer id' });
+      }
+      const customer = await customerService.getCustomerById(userId, customerId);
       if (!customer) {
         return res.status(404).json({ success: false, message: 'Customer not found' });
       }
@@ -38,7 +42,11 @@ export const customerController = {
   async update(req: Request, res: Response) {
     try {
       const userId = req.user.userId;
-      const customer = await customerService.updateCustomer(userId, req.params.id, req.body);
+      const customerId = req.params.id;
+      if (typeof customerId !== 'string') {
+        return res.status(400).json({ success: false, message: 'Invalid customer id' });
+      }
+      const customer = await customerService.updateCustomer(userId, customerId, req.body);
       if (!customer) {
         return res.status(404).json({ success: false, message: 'Customer not found' });
       }
@@ -51,7 +59,11 @@ export const customerController = {
   async delete(req: Request, res: Response) {
     try {
       const userId = req.user.userId;
-      const success = await customerService.deleteCustomer(userId, req.params.id);
+      const customerId = req.params.id;
+      if (typeof customerId !== 'string') {
+        return res.status(400).json({ success: false, message: 'Invalid customer id' });
+      }
+      const success = await customerService.deleteCustomer(userId, customerId);
       if (!success) {
         return res.status(404).json({ success: false, message: 'Customer not found' });
       }
