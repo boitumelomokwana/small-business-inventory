@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; color: #334155; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #F8F6F2; 
+      display: flex; 
+      flex-direction: column;
+      padding: 48px;
+      position: relative;
+    }
+    
+    .motif-line {
+      position: absolute;
+      top: 80px;
+      left: 48px;
+      right: 48px;
+      height: 1px;
+      background: #0F172A;
+    }
+    
+    .tracker-label {
+      position: absolute;
+      top: 54px;
+      right: 48px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .content-area {
+      flex: 1;
+      padding-top: 80px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    h2 {
+      font-family: 'Manrope', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: #0F172A;
+      margin-top: 40px;
+      margin-bottom: 60px;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+
+    .node {
+      border: 1px solid #0F172A;
+      padding: 24px;
+      text-align: left;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: transparent;
+      z-index: 10;
+    }
+
+    .node label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #334155;
+    }
+
+    .node .name {
+      font-family: 'Manrope', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .connector {
+      height: 1px;
+      background: #0F172A;
+      position: relative;
+    }
+
+    .connector::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -4px;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 8px solid #0F172A;
+    }
+
+    .boundary-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: #F8F6F2;
+      padding: 0 8px;
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="tracker-label">SYS_INV // ARCHITECTURE</div>
+    <div class="motif-line"></div>
+    
+    <div class="content-area">
+      <h2>How the system fits together</h2>
+      
+      <div class="arch-grid">
+        <!-- Client -->
+        <div class="node">
+          <label>Edge / Client</label>
+          <div class="name">Web Browser</div>
+          <p class="text-[12px]">Token-based auth<br>LocalStorage</p>
+        </div>
+
+        <!-- Connection 1 -->
+        <div class="connector mx-4">
+          <span class="boundary-label">HTTPS / JSON</span>
+        </div>
+
+        <!-- Frontend -->
+        <div class="node">
+          <label>UI Tier (Vercel)</label>
+          <div class="name">Next.js App</div>
+          <p class="text-[12px]">React 19 / Tailwind 4<br>Axios Interceptors</p>
+        </div>
+
+        <div class="flex flex-col h-full justify-center">
+            <div class="connector ml-4 mr-0">
+                <span class="boundary-label">REST API (JWT)</span>
+            </div>
+            <!-- API -->
+            <div class="node mt-12 ml-4">
+                <label>Logic Tier (Render)</label>
+                <div class="name">Express API</div>
+                <p class="text-[12px]">TypeScript / Zod<br>CORS Filtering</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col h-full justify-center">
+             <div class="connector ml-0 mr-4">
+                <span class="boundary-label">PG Pool / SQL</span>
+            </div>
+            <!-- DB -->
+            <div class="node mt-12 mr-4">
+                <label>Data Tier (Render)</label>
+                <div class="name">PostgreSQL</div>
+                <p class="text-[12px]">Raw SQL / Migrations<br>UUID Primary Keys</p>
+            </div>
+        </div>
+      </div>
+      
+      <div class="mt-auto pt-12 border-t border-[#CBD5E1]">
+        <p class="text-[13px] font-medium uppercase tracking-wider text-slate-500">Security Boundary:</p>
+        <p class="text-[15px] mt-2">All protected data is user-scoped. The API acts as the authoritative gate, validating JWT identity and enforcing isolation across all database operations.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

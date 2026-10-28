@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; color: #334155; }
+    .slide-container { 
+      width: 1280px; 
+      height: 720px;
+      background: #F8F6F2; 
+      display: flex; 
+      flex-direction: column;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .motif-line {
+      position: absolute;
+      top: 48px;
+      left: 32px;
+      right: 32px;
+      height: 1px;
+      background: #0F172A;
+      opacity: 0.12;
+    }
+    
+    .tracker-label {
+      position: absolute;
+      top: 20px;
+      right: 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .content-area {
+      flex: 1;
+      padding-top: 56px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    h2 {
+      font-family: 'Manrope', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 4px 0 18px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+
+    th {
+      text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      padding: 10px 18px;
+      border-bottom: 1px solid #0F172A;
+      color: #334155;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #CBD5E1;
+      vertical-align: top;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .risk-tag {
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #E16D5E; /* status-risk */
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .diamond {
+      width: 8px;
+      height: 8px;
+      background: #E16D5E;
+      transform: rotate(45deg);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .impact-high {
+      color: #E16D5E;
+      font-weight: 600;
+    }
+
+    .note-box {
+      margin-top: auto;
+      padding: 12px;
+      border: 1px solid #E16D5E;
+      background: #FDF1F0;
+    }
+
+    .note-title {
+      color: #E16D5E;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    code {
+      background: #F1EFEC;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="tracker-label">SYS_INV // BLOCKERS</div>
+    <div class="motif-line"></div>
+    
+    <div class="content-area">
+      <h2>Critical blockers & risks</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th width="30%">Risk / Blocker</th>
+            <th width="40%">Impact</th>
+            <th width="30%">Mitigation Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="risk-tag"><span class="diamond"></span>SCHEMA MISSING</div>
+            </td>
+            <td class="text-[15px] leading-snug">Registration fails with <code>"users" does not exist</code>. Connection resets prevent local migration.</td>
+            <td class="impact-high text-[14px]">Confirm startup migrations in Render or resolve port 5432 reset.</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="risk-tag"><span class="diamond"></span>EXPOSED SECRETS</div>
+            </td>
+            <td class="text-[15px] leading-snug">PostgreSQL credentials and JWT secret were visible in previous screenshots.</td>
+            <td class="impact-high text-[14px]">Rotate DB password immediately and update Render environment.</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="risk-tag"><span class="diamond"></span>CORS MISCONFIG</div>
+            </td>
+            <td class="text-[15px] leading-snug">Trailing slash in <code>FRONTEND_URL</code> prevents browser requests from the live site.</td>
+            <td class="text-[14px]">Verify exact origin string in Render Environment panel.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note-box">
+        <p class="note-title">Technical Warning:</p>
+        <p class="text-[15px]">Until the database schema is initialized, the system is functionally offline. All frontend fixes are secondary to ensuring the backend can persist user records.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
